@@ -1,5 +1,5 @@
 # objectDetTARS
 
-Will utilize OpenCV and potentially use a YOLO model or a vision model(LLaVa) for object detection when integrating within TARS.
+Will utilize OpenCV and potentially use a  a vision model(LLaVa) for object detection when integrating within TARS.
 
 ...Work in progress

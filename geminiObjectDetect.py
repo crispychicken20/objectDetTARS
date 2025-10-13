@@ -1,3 +1,12 @@
+# geminiObjectDetect.py
+import sys
+import io
+
+# Fix encoding for Windows console
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
+
 # Utils/camera/camera_gemini_image_description.py
 import os
 import cv2

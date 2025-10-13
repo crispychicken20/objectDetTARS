@@ -40,30 +40,34 @@ def describe_from_webcam(model: str = MODEL, prompt: str = PROMPT) -> str:
         return f"❌ Failed to initialize Gemini client: {e}"
 
     # Open camera
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
+    cam = cv2.VideoCapture(0)
+    if not cam.isOpened():
         return "❌ Cannot open webcam."
 
     print("📸 Camera ready. Press SPACE to capture, ESC to quit.")
     frame = None
     try:
         while True:
-            ok, img = cap.read()
+            ok, img = cam.read()
             if not ok:
                 # Try again; sometimes a frame fails
                 continue
 
-            cv2.imshow("Camera - Press SPACE to capture", img)
+            #Display the captured frame
+            cv2.imshow("TARS Camera - Press SPACE to capture", img)
             key = cv2.waitKey(1)
 
+            # Press 'ESC' to exit loop
             if key % 256 == 27:  # ESC
                 return "🚪 Exiting without capturing."
+            
+            # Press 'SPACE' to capture image
             if key % 256 == 32:  # SPACE
                 frame = img
                 print("✅ Image captured.")
                 break
     finally:
-        cap.release()
+        cam.release()
         cv2.destroyAllWindows()
 
     if frame is None:

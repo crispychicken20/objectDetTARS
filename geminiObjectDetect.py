@@ -1,0 +1,96 @@
+# Utils/camera/camera_gemini_image_description.py
+import os
+import cv2
+import tempfile
+from dotenv import load_dotenv
+from google import genai
+from google.genai import types
+
+# Load .env so GEMINI_API_KEY is available
+load_dotenv()
+
+MODEL = "gemini-2.5-flash"
+PROMPT = "You are a helpful assistant. Your task is to describe this image in a concise manner."
+
+def describe_from_webcam(model: str = MODEL, prompt: str = PROMPT) -> str:
+    """
+    Opens the webcam, waits for SPACE to capture, ESC to cancel,
+    sends the image to Gemini, and returns the description text.
+    """
+    # Fixed: Properly get API key from environment variable
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return ("❌ Missing Gemini API key. Set it in your environment, e.g.\n"
+                "   set GEMINI_API_KEY=your_key   (Windows)\n"
+                "   export GEMINI_API_KEY=your_key (macOS/Linux)")
+
+    # Initialize client
+    try:
+        client = genai.Client(api_key=api_key)
+    except Exception as e:
+        return f"❌ Failed to initialize Gemini client: {e}"
+
+    # Open camera
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        return "❌ Cannot open webcam."
+
+    print("📸 Camera ready. Press SPACE to capture, ESC to quit.")
+    frame = None
+    try:
+        while True:
+            ok, img = cap.read()
+            if not ok:
+                # Try again; sometimes a frame fails
+                continue
+
+            cv2.imshow("Camera - Press SPACE to capture", img)
+            key = cv2.waitKey(1)
+
+            if key % 256 == 27:  # ESC
+                return "🚪 Exiting without capturing."
+            if key % 256 == 32:  # SPACE
+                frame = img
+                print("✅ Image captured.")
+                break
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
+
+    if frame is None:
+        return "⚠️ No frame captured."
+    
+    image_path = None
+
+    # Save to a temp file and read bytes
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            image_path = tmp.name
+            cv2.imwrite(image_path, frame)
+
+        with open(image_path, "rb") as f:
+            image_bytes = f.read()
+    except Exception as e:
+        return f"❌ Failed to save/read captured image: {e}"
+    finally:
+        try:
+            if image_path and os.path.exists(image_path):
+                os.remove(image_path)
+        except Exception:
+            pass  # Non-fatal
+
+    # Send to Gemini
+    try:
+        resp = client.models.generate_content(
+            model=model,
+            contents=[
+                types.Part.from_bytes(data=image_bytes, mime_type="image/png"),
+                prompt
+            ]
+        )
+        text = getattr(resp, "text", None) or ""
+        if not text.strip():
+            return "⚠️ Gemini returned no description."
+        return f"🖼️ Image Description:\n{text}"
+    except Exception as e:
+        return f"❌ Error during Gemini request: {e}"

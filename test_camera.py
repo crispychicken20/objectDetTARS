@@ -1,5 +1,5 @@
 # test_camera.py
-from geminiObjectDetect import describe_from_webcam
+from util.geminiObjectDetect import describe_from_webcam
 
 if __name__ == "__main__":
     print("Starting camera test...\n")

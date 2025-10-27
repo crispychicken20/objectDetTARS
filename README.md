@@ -5,4 +5,4 @@ Will utilize OpenCV and potentially use a  a vision model(LLaVa) for object dete
 * Used LM to run the LLM model LLaVa
 * using gemini call to test the live camera detection
 
-...Work in progress
+Used Gemini. Works alongside TARS camera feature
